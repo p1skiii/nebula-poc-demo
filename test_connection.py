@@ -88,11 +88,14 @@ with connection_pool.session_context('root', 'nebula') as session:
         print("列名:", [name.decode('utf-8') if isinstance(name, bytes) else name for name in column_names])
         
         # 打印查询结果
-        for record in resp.records():
-            values = record.values()
-            relation_type = values[0].as_string()
-            player_name = values[1].as_string()
-            print(f"{relation_type}: {player_name}")
+        for row in resp.rows():
+            values = row.values()
+            if len(values) >= 2:
+                relation_type = str(values[0])  # 使用 str() 替代 .as_string()
+                player_name = str(values[1])
+                print(f"{relation_type}: {player_name}")
+            else:
+                print(f"行数据: {values}")
     else:
         print("查询失败:", resp.error_msg())
 
