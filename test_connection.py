@@ -26,21 +26,25 @@ with connection_pool.session_context('root', 'nebula') as session:
     if resp.is_succeeded():
         # 解析返回结果获取球员属性
         print("查询成功!")
-        # 获取列名
-        column_names = resp.column_names()
+        # 获取列名 (注意: 在新版本的 nebula3-python API 中使用 keys() 而不是 column_names())
+        column_names = resp.keys()
         print("列名:", column_names)
         
         # 遍历每一行结果
-        for record in resp.records():
-            # 获取节点值 (v 列)
-            node_val = record.values()[0]
-            # 获取节点的所有属性
-            props = node_val.as_node().properties()
-            print(f"球员 ID: {node_val.as_node().vid().as_string()}")
-            print(f"球员属性: {props}")
-            # 特别打印 age 属性
-            if 'age' in props:
-                print(f"Tim Duncan 的年龄: {props['age'].as_int()}")
+        # 遍历每一行结果
+        for row in resp.rows():
+            # NebulaGraph v3.8.3 API 可能返回不同的数据格式
+            # 先尝试直接获取第一列的值
+            values = row.values()
+            if len(values) >= 2:  # 使用 RETURN id(v), v.name 会有两列
+                player_id = values[0]
+                player_name = values[1]
+                print(f"球员 ID: {player_id}")
+                print(f"球员名字: {player_name}")
+                if player_name == "Tim Duncan":
+                    print("找到 Tim Duncan!")
+            else:
+                print(f"行数据: {values}")
     else:
         print("查询失败:", resp.error_msg())
     
@@ -51,19 +55,19 @@ with connection_pool.session_context('root', 'nebula') as session:
     
     if resp.is_succeeded():
         print("查询成功!")
-        column_names = resp.column_names()
+        column_names = resp.keys()
         print("列名:", column_names)
         
         print("Tim Duncan 关注的球员:")
-        for i, record in enumerate(resp.records()):
-            # 获取好友节点
-            friend_node = record.values()[0]
-            # 获取好友 ID
-            friend_id = friend_node.as_node().vid().as_string()
-            # 获取好友属性
-            friend_props = friend_node.as_node().properties()
-            friend_name = friend_props.get('name', '未知').as_string() if 'name' in friend_props else '未知'
-            print(f"{i+1}. 好友ID: {friend_id}, 姓名: {friend_name}")
+        for i, row in enumerate(resp.rows()):
+            # 获取好友信息
+            values = row.values()
+            if values:
+                print(f"{i+1}. 好友信息: {values}")
+                # 尝试提取好友名字 (如果有)
+                if len(values) > 0:
+                    friend_info = values[0]
+                    print(f"   详细信息: {friend_info}")
     else:
         print("查询失败:", resp.error_msg())
 
@@ -80,8 +84,8 @@ with connection_pool.session_context('root', 'nebula') as session:
     
     if resp.is_succeeded():
         # 获取列名
-        column_names = resp.column_names()
-        print("列名:", [name.decode('utf-8') for name in column_names])
+        column_names = resp.keys()
+        print("列名:", [name.decode('utf-8') if isinstance(name, bytes) else name for name in column_names])
         
         # 打印查询结果
         for record in resp.records():
