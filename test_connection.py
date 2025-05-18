@@ -33,18 +33,20 @@ with connection_pool.session_context('root', 'nebula') as session:
         # 遍历每一行结果
         # 遍历每一行结果
         for row in resp.rows():
-            # NebulaGraph v3.8.3 API 可能返回不同的数据格式
-            # 先尝试直接获取第一列的值
-            values = row.values()
-            if len(values) >= 2:  # 使用 RETURN id(v), v.name 会有两列
-                player_id = values[0]
-                player_name = values[1]
+            # NebulaGraph v3.8.3 API 中，row 是特殊的 Row 对象
+            try:
+                # 尝试直接通过索引访问
+                player_id = row[0]
+                player_name = row[1]
                 print(f"球员 ID: {player_id}")
                 print(f"球员名字: {player_name}")
-                if player_name == "Tim Duncan":
+                if str(player_name) == "Tim Duncan":
                     print("找到 Tim Duncan!")
-            else:
-                print(f"行数据: {values}")
+            except (IndexError, TypeError) as e:
+                print(f"无法解析行数据: {row}, 错误: {e}")
+                # 尝试获取更多信息
+                print(f"行数据类型: {type(row)}")
+                print(f"行数据内容: {repr(row)}")
     else:
         print("查询失败:", resp.error_msg())
     
@@ -60,13 +62,12 @@ with connection_pool.session_context('root', 'nebula') as session:
         
         print("Tim Duncan 关注的球员:")
         for i, row in enumerate(resp.rows()):
-            # 获取好友信息
-            values = row.values()
-            if values:
-                print(f"{i+1}. 好友信息: {values}")
+            # 在 NebulaGraph v3.8.3 API 中，row 已经是一个列表
+            if row:
+                print(f"{i+1}. 好友信息: {row}")
                 # 尝试提取好友名字 (如果有)
-                if len(values) > 0:
-                    friend_info = values[0]
+                if len(row) > 0:
+                    friend_info = row[0]
                     print(f"   详细信息: {friend_info}")
     else:
         print("查询失败:", resp.error_msg())
@@ -89,13 +90,12 @@ with connection_pool.session_context('root', 'nebula') as session:
         
         # 打印查询结果
         for row in resp.rows():
-            values = row.values()
-            if len(values) >= 2:
-                relation_type = str(values[0])  # 使用 str() 替代 .as_string()
-                player_name = str(values[1])
+            if len(row) >= 2:
+                relation_type = str(row[0])  # 使用 str() 替代 .as_string()
+                player_name = str(row[1])
                 print(f"{relation_type}: {player_name}")
             else:
-                print(f"行数据: {values}")
+                print(f"行数据: {row}")
     else:
         print("查询失败:", resp.error_msg())
 
