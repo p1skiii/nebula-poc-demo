@@ -26,6 +26,19 @@ with connection_pool.session_context('root', 'nebula') as session:
     gql_fetch_prop = 'FETCH PROP ON player "player100", "player101" YIELD properties(vertex).name, properties(vertex).age;'
     resp = session.execute(gql_fetch_prop)
     print(resp)
+    """
+    编写 Python 代码遍历 ResultSet，提取并打印出每个球员的 ID、姓名和年龄。
+    """
+    # 这里的 resp 是一个 ResultSet 对象
+    for row in resp.rows():
+        # row 是一个 Row 对象，包含了查询结果的一行数据
+        # 通过 row.values() 方法获取该行的所有值
+        values = row.values()
+        if values is None:
+            print(resp.rows)
+            exit(1)
+        # 打印每个球员的 ID、姓名和年龄
+        print(f"球员 ID: {values[0]}, 姓名: {values[1]}, 年龄: {values[2]}")
 
 """
     print(20* "---")
