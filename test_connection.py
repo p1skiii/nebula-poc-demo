@@ -60,7 +60,20 @@ with connection_pool.session_context('root', 'nebula') as session:
     '''
     resp = session.execute(query)
     print(resp)
+    for row in resp.rows():
+        path = row.values[0]
+        player1 = path.get_start_vertex().get_id()
+        player1_name = player1.get_name().decode('utf-8')
+        player1_age = path.get_start_vertex().get_property('age').get_iVal()
+        edge = path.get_edge()
+        edge_degree = edge.get_property('degree').get_iVal()
+        player2 = path.get_end_vertex().get_id()
+        player2_name = player2.get_name().decode('utf-8')
+        player2_age = player2.get_property('age').get_iVal()
+        print(f"球员1: {player1_name}, 年龄: {player1_age}, 关系强度: {edge_degree}, 球员2: {player2_name}, 年龄: {player2_age}")
+    print(20* "---")
 
-    
+        
+
 # 关闭连接池
 connection_pool.close()
