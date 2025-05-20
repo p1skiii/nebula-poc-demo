@@ -32,9 +32,6 @@ with connection_pool.session_context('root', 'nebula') as session:
     # 这里的 resp 是一个 ResultSet 对象
     for row in resp.rows():
         # row 是一个 Row 对象，需要使用 get_value() 方法获取值
-        if row is None:
-            print(resp.rows)
-            exit(1)
         # print(row.values[0])
         player_name = row.values[0].get_sVal().decode('utf-8')
         player_age = row.values[1].get_iVal()
@@ -59,18 +56,48 @@ with connection_pool.session_context('root', 'nebula') as session:
     LIMIT 5;
     '''
     resp = session.execute(query)
-    print(resp)
+    # print(resp)
     for row in resp.rows():
         path = row.values[0]
-        player1 = path.get_start_vertex().get_id()
-        player1_name = player1.get_name().decode('utf-8')
-        player1_age = path.get_start_vertex().get_property('age').get_iVal()
-        edge = path.get_edge()
-        edge_degree = edge.get_property('degree').get_iVal()
-        player2 = path.get_end_vertex().get_id()
-        player2_name = player2.get_name().decode('utf-8')
-        player2_age = player2.get_property('age').get_iVal()
-        print(f"球员1: {player1_name}, 年龄: {player1_age}, 关系强度: {edge_degree}, 球员2: {player2_name}, 年龄: {player2_age}")
+        # print(path)
+        path2 = path.get_pVal()
+        #print(path2)
+        src_vertex = path2.src
+        # print(src_vertex)
+        player1_vid = src_vertex.vid.get_sVal().decode('utf-8')
+        # print(player1_vid)
+        player1_tag = src_vertex.tags[0]  
+        player1_props = player1_tag.props  
+        player1_name = player1_props[b'name'].get_sVal().decode('utf-8')
+        player1_age = player1_props[b'age'].get_iVal()
+        
+        step = path2.steps[0]
+        #print(step)
+        dst_vertex = step.dst
+        #print(dst_vertex)
+        edge_id = dst_vertex.vid.get_sVal().decode('utf-8')
+        # print(edge)
+        edge_props = dst_vertex.tags[0].props
+        # print(edge_props)
+
+        edge_degree = step.props[b'degree'].get_iVal()
+        print(edge_degree)
+        edge_name = edge_props[b'name'].get_sVal().decode('utf-8')
+        
+        print(edge_name)
+        player2_vid = dst_vertex.vid.get_sVal().decode('utf-8')
+        # print(player2_vid)
+        dst_vertex = step.dst
+        player2_vid = dst_vertex.vid.get_sVal().decode('utf-8')
+        player2_tag = dst_vertex.tags[0]
+        player2_props = player2_tag.props
+        player2_name = player2_props[b'name'].get_sVal().decode('utf-8')
+        player2_age = player2_props[b'age'].get_iVal()
+        print(f"路径: {player1_name}({player1_vid}) --[{edge_name}:{edge_degree}]--> {player2_name}({player2_vid})")
+        print(f"球员1: {player1_name}, 年龄: {player1_age}")
+        print(f"球员2: {player2_name}, 年龄: {player2_age}")#player1_props = player1_vertex.get_props()
+        #player1_name = player1_props[b'name'].get_sVal().decode('utf-8')
+        #player1_age = player1_props[b'age'].get_iVal()
     print(20* "---")
 
         
