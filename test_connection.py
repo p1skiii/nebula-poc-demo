@@ -40,24 +40,15 @@ with connection_pool.session_context('root', 'nebula') as session:
         player_age = row.values[1].get_iVal()
         print(f"姓名: {player_name}, 年龄: {player_age}")
 
-
-    print(20* "---")
-
-    gql_match_prop = 'MATCH (v:player) WHERE id(v) IN ["player100", "player101"] RETURN id(v) AS player_id, v.name AS player_name, v.age AS player_age;'
-    resp = session.execute(gql_match_prop)
-    print(resp)
-
-
-    print(20* "---")
-
-    gql_go = 'GO FROM "player100" OVER follow YIELD dst(edge) AS friend_id;'
-    resp = session.execute(gql_go)
-    print(resp)
     print(20* "---")
 
     gql_go_with_prop = 'GO FROM "player100" OVER follow YIELD dst(edge) AS friend_id, properties(edge).degree AS follow_degree;'
     resp = session.execute(gql_go_with_prop)
     print(resp)
+    for i in resp.rows():
+        friend_id = i.values[0].get_sVal().decode('utf-8')
+        follow_degree = i.values[1].get_iVal()
+        print(f"好友 ID: {friend_id}, 关系强度: {follow_degree}")
     print(20* "---")
 
 # 关闭连接池
