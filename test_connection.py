@@ -31,21 +31,23 @@ with connection_pool.session_context('root', 'nebula') as session:
     """
     # 这里的 resp 是一个 ResultSet 对象
     for row in resp.rows():
-        # row 是一个 Row 对象，包含了查询结果的一行数据
-        # 通过 row.values() 方法获取该行的所有值
-        values = row.values()
-        if values is None:
+        # row 是一个 Row 对象，需要使用 get_value() 方法获取值
+        if row is None:
             print(resp.rows)
             exit(1)
-        # 打印每个球员的 ID、姓名和年龄
-        print(f"球员 ID: {values[0]}, 姓名: {values[1]}, 年龄: {values[2]}")
+        # print(row.values[0])
+        player_name = row.values[0].get_sVal().decode('utf-8')
+        player_age = row.values[1].get_iVal()
+        print(f"姓名: {player_name}, 年龄: {player_age}")
 
-"""
+
     print(20* "---")
 
     gql_match_prop = 'MATCH (v:player) WHERE id(v) IN ["player100", "player101"] RETURN id(v) AS player_id, v.name AS player_name, v.age AS player_age;'
     resp = session.execute(gql_match_prop)
     print(resp)
+
+
     print(20* "---")
 
     gql_go = 'GO FROM "player100" OVER follow YIELD dst(edge) AS friend_id;'
@@ -57,6 +59,6 @@ with connection_pool.session_context('root', 'nebula') as session:
     resp = session.execute(gql_go_with_prop)
     print(resp)
     print(20* "---")
-"""
+
 # 关闭连接池
 connection_pool.close()
