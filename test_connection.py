@@ -43,6 +43,7 @@ with connection_pool.session_context('root', 'nebula') as session:
     print(20* "---")
 
     gql_go_with_prop = 'GO FROM "player100" OVER follow YIELD dst(edge) AS friend_id, properties(edge).degree AS follow_degree;'
+    
     resp = session.execute(gql_go_with_prop)
     print(resp)
     for i in resp.rows():
@@ -51,5 +52,15 @@ with connection_pool.session_context('root', 'nebula') as session:
         print(f"好友 ID: {friend_id}, 关系强度: {follow_degree}")
     print(20* "---")
 
+    query = '''
+    MATCH p=(v1:player)-[:follow]->(v2:player) 
+    WHERE id(v1)=="player100" 
+    RETURN p 
+    LIMIT 5;
+    '''
+    resp = session.execute(query)
+    print(resp)
+
+    
 # 关闭连接池
 connection_pool.close()
